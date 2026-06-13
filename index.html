@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prismaflex CRRT Heparin 計算器</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-label="CRRT 計算工作區">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Prismaflex CRRT</p>
+            <h1>Heparin 抗凝機器設定計算器</h1>
+          </div>
+          <div class="status-pill" id="statusPill">OK</div>
+        </header>
+
+        <div class="notice" role="note">
+          本工具依「PrismaflexCRRT自動方案表單Heparin版.xlsx」公式製作，供透析護理人員核對機器設定。實際處方、溶液種類、抗凝調整與監測仍需依醫師醫囑與院內流程執行。
+        </div>
+
+        <div class="layout">
+          <form class="panel inputs" id="crrtForm">
+            <section>
+              <div class="section-title">
+                <span>A</span>
+                <h2>病人與處方</h2>
+              </div>
+              <div class="field-grid">
+                <label>
+                  <span>體重</span>
+                  <div class="control">
+                    <input id="weightKg" type="number" min="0" step="0.1" value="60" />
+                    <small>kg</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>治療模式</span>
+                  <div class="control">
+                    <select id="mode">
+                      <option value="CVVHDF">CVVHDF</option>
+                      <option value="CVVH">CVVH</option>
+                      <option value="CVVHD">CVVHD</option>
+                    </select>
+                  </div>
+                </label>
+
+                <label>
+                  <span>目標劑量</span>
+                  <div class="control">
+                    <input id="targetDose" type="number" min="0" step="0.1" value="25" />
+                    <small>mL/kg/hr</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>血流量 Qb</span>
+                  <div class="control">
+                    <input id="bloodFlow" type="number" min="0" step="1" value="180" />
+                    <small>mL/min</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>預計治療時數</span>
+                  <div class="control">
+                    <input id="hours" type="number" min="0" step="0.5" value="24" />
+                    <small>hr</small>
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <section>
+              <div class="section-title">
+                <span>B</span>
+                <h2>流量分配與淨脫水</h2>
+              </div>
+              <div class="field-grid">
+                <label>
+                  <span>淨脫水 Net UF</span>
+                  <div class="control">
+                    <input id="netUf" type="number" min="0" step="1" value="100" />
+                    <small>mL/hr</small>
+                  </div>
+                </label>
+
+                <label id="dialysateRatioField">
+                  <span>CVVHDF 透析液比例</span>
+                  <div class="control">
+                    <input id="dialysateRatio" type="number" min="0" max="100" step="1" value="50" />
+                    <small>%</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>置換液 Pre 比例</span>
+                  <div class="control">
+                    <input id="preRatio" type="number" min="0" max="100" step="1" value="70" />
+                    <small>%</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>置換液 Post 比例</span>
+                  <div class="control output-control">
+                    <output id="postRatio">30</output>
+                    <small>%</small>
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <section>
+              <div class="section-title">
+                <span>C</span>
+                <h2>送達劑量校正</h2>
+              </div>
+              <div class="field-grid">
+                <label>
+                  <span>血比容 Hct</span>
+                  <div class="control">
+                    <input id="hematocritPercent" type="number" min="0" max="80" step="0.1" value="30" />
+                    <small>%</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>預估中斷比例</span>
+                  <div class="control">
+                    <input id="downtimePercent" type="number" min="0" max="100" step="1" value="0" />
+                    <small>%</small>
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <section>
+              <div class="section-title">
+                <span>D</span>
+                <h2>肝素摘要</h2>
+              </div>
+              <div class="field-grid">
+                <label>
+                  <span>抗凝方式</span>
+                  <div class="control output-control">
+                    <output>肝素</output>
+                  </div>
+                </label>
+
+                <label>
+                  <span>肝素起始 Bolus</span>
+                  <div class="control">
+                    <input id="heparinBolus" type="number" min="0" step="1" value="0" />
+                    <small>U</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>肝素維持滴注</span>
+                  <div class="control">
+                    <input id="heparinInfusion" type="number" min="0" step="1" value="0" />
+                    <small>U/hr</small>
+                  </div>
+                </label>
+              </div>
+            </section>
+          </form>
+
+          <section class="panel results" aria-label="計算結果">
+            <div class="section-title">
+              <span>E</span>
+              <h2>Prismaflex 輸入值</h2>
+            </div>
+
+            <div class="machine-visual" aria-label="CRRT 流量示意">
+              <div class="machine-core">
+                <div class="screen">Prismaflex</div>
+                <div class="filter">Filter</div>
+              </div>
+              <div class="flow flow-qb">Qb <b id="visualQb">180</b></div>
+              <div class="flow flow-qd">Qd <b id="visualQd">700</b></div>
+              <div class="flow flow-qr">Qr <b id="visualQr">700</b></div>
+              <div class="flow flow-uf">UF <b id="visualUf">100</b></div>
+            </div>
+
+            <div class="setting-grid">
+              <article class="metric primary">
+                <span>血流量 Qb</span>
+                <strong id="outQb">180</strong>
+                <small>mL/min</small>
+              </article>
+              <article class="metric primary">
+                <span>總濾出液 Effluent</span>
+                <strong id="outEffluent">1500</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric">
+                <span>透析液 Qd</span>
+                <strong id="outQd">700</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric">
+                <span>置換液總量 Qr</span>
+                <strong id="outQr">700</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric">
+                <span>置換液 Pre</span>
+                <strong id="outPre">490</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric">
+                <span>置換液 Post</span>
+                <strong id="outPost">210</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric">
+                <span>Patient Removal</span>
+                <strong id="outNetUf">100</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric">
+                <span>處方劑量</span>
+                <strong id="outPrescribedDose">25</strong>
+                <small>mL/kg/hr</small>
+              </article>
+              <article class="metric emphasis">
+                <span>預估送達劑量</span>
+                <strong id="outDeliveredDose">23.5</strong>
+                <small>mL/kg/hr</small>
+              </article>
+              <article class="metric">
+                <span>Pre 稀釋校正</span>
+                <strong id="outPredilutionFactor">94</strong>
+                <small>%</small>
+              </article>
+              <article class="metric">
+                <span>治療 uptime</span>
+                <strong id="outUptimeFactor">100</strong>
+                <small>%</small>
+              </article>
+            </div>
+
+            <div class="callout" id="validationMessage">Effluent 大於 Net UF，流量分配合理。</div>
+          </section>
+        </div>
+
+        <section class="panel wide-panel">
+          <div class="section-title">
+            <span>F</span>
+            <h2>預期結果與耗液量</h2>
+          </div>
+
+          <div class="tables">
+            <table>
+              <caption>24 小時估算</caption>
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th>數值</th>
+                  <th>單位</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>透析液</td><td id="dayDialysate">16.8</td><td>L/day</td></tr>
+                <tr><td>置換液</td><td id="dayReplacement">16.8</td><td>L/day</td></tr>
+                <tr><td>Net UF</td><td id="dayNetUf">2.4</td><td>L/day</td></tr>
+                <tr><td>Effluent</td><td id="dayEffluent">36</td><td>L/day</td></tr>
+              </tbody>
+            </table>
+
+            <table>
+              <caption>依輸入治療時數估算</caption>
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th>數值</th>
+                  <th>單位</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>透析液</td><td id="sessionDialysate">16.8</td><td>L</td></tr>
+                <tr><td>置換液</td><td id="sessionReplacement">16.8</td><td>L</td></tr>
+                <tr><td>Net UF</td><td id="sessionNetUf">2.4</td><td>L</td></tr>
+                <tr><td>Effluent</td><td id="sessionEffluent">36</td><td>L</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel wide-panel audit">
+          <div class="section-title">
+            <span>G</span>
+            <h2>公式核對</h2>
+          </div>
+          <div class="formula-grid">
+            <p><b>目標 Effluent</b> = 體重 × 目標劑量</p>
+            <p><b>治療液總量</b> = MAX(Effluent - Net UF, 0)</p>
+            <p><b>CVVHDF Qd</b> = 治療液總量 × 透析液比例</p>
+            <p><b>CVVHD Qd</b> = 治療液總量；<b>CVVH Qd</b> = 0</p>
+            <p><b>Qr</b> = 治療液總量 - Qd</p>
+            <p><b>Pre/Post</b> = Qr × Pre% / Qr - Pre</p>
+            <p><b>處方劑量</b> = (Qd + Qr + Net UF) / 體重</p>
+            <p><b>耗液量</b> = 各流量 × 時數 / 1000</p>
+            <p><b>血漿水流量</b> = Qb × 60 × (1 - Hct%)</p>
+            <p><b>Pre 稀釋校正</b> = 血漿水流量 / (血漿水流量 + Pre)</p>
+            <p><b>預估送達劑量</b> = 處方劑量 × Pre 稀釋校正 × uptime</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./crrt-core.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
