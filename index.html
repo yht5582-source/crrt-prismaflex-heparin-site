@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CRRT計算器</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=2.0" />
   </head>
   <body>
     <main class="app-shell">
@@ -14,7 +14,11 @@
             <p class="eyebrow">Prismaflex CRRT</p>
             <h1>CRRT計算器</h1>
           </div>
-          <div class="status-pill" id="statusPill">OK</div>
+          <div class="topbar-actions">
+            <button type="button" class="ghost" id="resetButton">還原預設</button>
+            <button type="button" id="copyButton">複製設定摘要</button>
+            <div class="status-pill" id="statusPill" role="status" aria-live="polite">OK</div>
+          </div>
         </header>
 
         <div class="notice" role="note">
@@ -96,8 +100,8 @@
                   </div>
                 </label>
 
-                <label>
-                  <span>置換液 Pre 比例</span>
+                <label id="preRatioField">
+                  <span>置換液 Pre 比例（CVVH / CVVHDF）</span>
                   <div class="control">
                     <input id="preRatio" type="number" min="0" max="100" step="1" value="70" />
                     <small>%</small>
@@ -164,6 +168,14 @@
                   <div class="control">
                     <input id="heparinInfusion" type="number" min="0" step="1" value="0" />
                     <small>U/hr</small>
+                  </div>
+                </label>
+
+                <label>
+                  <span>肝素針筒濃度</span>
+                  <div class="control">
+                    <input id="heparinConcentration" type="number" min="0" step="1" placeholder="例 100" />
+                    <small>U/mL</small>
                   </div>
                 </label>
               </div>
@@ -243,9 +255,30 @@
                 <strong id="outUptimeFactor">100</strong>
                 <small>%</small>
               </article>
+              <article class="metric" id="ffCard">
+                <span>過濾分率 FF</span>
+                <strong id="outFiltrationFraction">9.9</strong>
+                <small>%（建議 ≤ 25）</small>
+              </article>
+              <article class="metric heparin">
+                <span>肝素維持</span>
+                <strong id="outHeparinPerKg">0</strong>
+                <small>U/kg/hr</small>
+              </article>
+              <article class="metric heparin">
+                <span>肝素針筒速率</span>
+                <strong id="outHeparinRateMl">—</strong>
+                <small>mL/hr</small>
+              </article>
+              <article class="metric heparin">
+                <span>肝素 Bolus</span>
+                <strong id="outHeparinBolusMl">—</strong>
+                <small>mL</small>
+              </article>
             </div>
 
-            <div class="callout" id="validationMessage">Effluent 大於 Net UF，流量分配合理。</div>
+            <ul class="callout" id="validationMessage" aria-live="polite"><li class="ok">Effluent 大於 Net UF，流量分配合理。</li></ul>
+            <p class="copy-status" id="copyStatus" role="status" aria-live="polite"></p>
           </section>
         </div>
 
@@ -270,11 +303,12 @@
                 <tr><td>置換液</td><td id="dayReplacement">16.8</td><td>L/day</td></tr>
                 <tr><td>Net UF</td><td id="dayNetUf">2.4</td><td>L/day</td></tr>
                 <tr><td>Effluent</td><td id="dayEffluent">36</td><td>L/day</td></tr>
+                <tr><td>肝素維持</td><td id="dayHeparin">0</td><td>U/day</td></tr>
               </tbody>
             </table>
 
             <table>
-              <caption>依輸入治療時數估算</caption>
+              <caption>依輸入治療時數估算（<span id="sessionHoursLabel">24</span> hr）</caption>
               <thead>
                 <tr>
                   <th>項目</th>
@@ -287,6 +321,7 @@
                 <tr><td>置換液</td><td id="sessionReplacement">16.8</td><td>L</td></tr>
                 <tr><td>Net UF</td><td id="sessionNetUf">2.4</td><td>L</td></tr>
                 <tr><td>Effluent</td><td id="sessionEffluent">36</td><td>L</td></tr>
+                <tr><td>肝素（含 Bolus）</td><td id="sessionHeparin">0</td><td>U</td></tr>
               </tbody>
             </table>
           </div>
@@ -303,18 +338,21 @@
             <p><b>CVVHDF Qd</b> = 治療液總量 × 透析液比例</p>
             <p><b>CVVHD Qd</b> = 治療液總量；<b>CVVH Qd</b> = 0</p>
             <p><b>Qr</b> = 治療液總量 - Qd</p>
-            <p><b>Pre/Post</b> = Qr × Pre% / Qr - Pre</p>
+            <p><b>Pre</b> = Qr × Pre%；<b>Post</b> = Qr − Pre</p>
             <p><b>處方劑量</b> = (Qd + Qr + Net UF) / 體重</p>
             <p><b>耗液量</b> = 各流量 × 時數 / 1000</p>
-            <p><b>血漿水流量</b> = Qb × 60 × (1 - Hct%)</p>
-            <p><b>Pre 稀釋校正</b> = 血漿水流量 / (血漿水流量 + Pre)</p>
+            <p><b>血漿流量 Qp</b> = Qb × 60 × (1 − Hct%)</p>
+            <p><b>Pre 稀釋校正</b> = Qp / (Qp + Pre)</p>
             <p><b>預估送達劑量</b> = 處方劑量 × Pre 稀釋校正 × uptime</p>
+            <p><b>過濾分率 FF</b> = (Pre + Post + Net UF) / (Qp + Pre)</p>
+            <p><b>肝素 U/kg/hr</b> = 維持滴注 / 體重</p>
+            <p><b>肝素 mL/hr</b> = 維持滴注 / 針筒濃度；<b>Bolus mL</b> = Bolus / 濃度</p>
           </div>
         </section>
       </section>
     </main>
 
-    <script src="./crrt-core.js"></script>
-    <script src="./app.js"></script>
+    <script src="./crrt-core.js?v=2.0"></script>
+    <script src="./app.js?v=2.0"></script>
   </body>
 </html>
