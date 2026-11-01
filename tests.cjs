@@ -63,4 +63,59 @@ t("Hct > 80 clamped and warned", () => {
   const r = calculateCrrt({ ...base, hematocritPercent: 90 });
   assert.strictEqual(r.hematocritPercent, 80); assert.ok(codes(r).includes("hctClamped"));
 });
+
+const { CASES, QUIZ, MAP, SOURCES } = require("./teach-content.js");
+t("6 demo cases, every expected number matches the engine", () => {
+  assert.strictEqual(CASES.length, 6);
+  CASES.forEach((c) => c.scenarios.forEach((s) => {
+    const r = calculateCrrt(s.input);
+    Object.entries(s.expect).forEach(([key, value]) => {
+      assert.ok(Math.abs(r[key] - value) <= 0.051, `${c.id} ${s.label} ${key}: ${r[key]} != ${value}`);
+    });
+  }));
+});
+t("case 1 stays in range; case 2 and 3 first scenario trip the FF alert", () => {
+  assert.deepStrictEqual(codes(calculateCrrt(CASES[0].scenarios[0].input)), []);
+  [1, 2].forEach((i) => {
+    assert.ok(codes(calculateCrrt(CASES[i].scenarios[0].input)).includes("filtrationFraction"));
+    assert.ok(!codes(calculateCrrt(CASES[i].scenarios[1].input)).includes("filtrationFraction"));
+  });
+});
+t("case 5 high heparin warns; fixed scenarios land in 20–25", () => {
+  assert.ok(codes(calculateCrrt(CASES[4].scenarios[0].input)).includes("heparinHigh"));
+  [CASES[1].scenarios[1], CASES[2].scenarios[1], CASES[3].scenarios[1], CASES[4].scenarios[1]].forEach((s) => {
+    assert.ok(calculateCrrt(s.input).isDeliveredDoseCommonRange, s.label);
+  });
+});
+t("quiz: 20 questions, 10 + 10, four options, A–D 5 each", () => {
+  assert.strictEqual(QUIZ.length, 20);
+  assert.strictEqual(QUIZ.filter((q) => q.level === "基礎").length, 10);
+  assert.strictEqual(QUIZ.filter((q) => q.level === "高階").length, 10);
+  QUIZ.forEach((q) => { assert.strictEqual(q.options.length, 4); assert.strictEqual(new Set(q.options).size, 4); });
+  ["A", "B", "C", "D"].forEach((letter) => assert.strictEqual(QUIZ.filter((q) => q.answer === letter).length, 5, letter));
+});
+t("quiz numeric answers match the engine", () => {
+  const withCalc = QUIZ.filter((q) => q.calc);
+  assert.ok(withCalc.length >= 7);
+  withCalc.forEach((q) => {
+    const value = calculateCrrt(q.calc.input)[q.calc.field];
+    assert.ok(Math.abs(value - q.calc.value) <= 0.051, `${q.q}: ${value}`);
+  });
+});
+t("quiz explanation numbers for the fix-choice question", () => {
+  const b = { ...base, weightKg: 80, mode: "CVVH", preRatio: 100, targetDose: 25, bloodFlow: 120 };
+  near(calculateCrrt(b).filtrationFraction, 28.8);
+  const up = calculateCrrt({ ...b, targetDose: 35 });
+  near(up.estimatedDeliveredDose, 22.8); near(up.filtrationFraction, 36.2);
+  near(calculateCrrt({ ...b, targetDose: 20 }).estimatedDeliveredDose, 15.4);
+  const post = calculateCrrt({ ...b, preRatio: 0 });
+  near(post.estimatedDeliveredDose, 25); near(post.filtrationFraction, 39.7);
+  const net = calculateCrrt({ ...base, netUf: 300 });
+  assert.strictEqual(net.qd, 600); assert.strictEqual(net.qr, 600); assert.strictEqual(net.totalEffluent, 1500);
+});
+t("content references existing sources; map has branches", () => {
+  CASES.forEach((c) => c.sources.forEach((key) => assert.ok(SOURCES[key], key)));
+  QUIZ.forEach((q) => q.sources.forEach((key) => assert.ok(SOURCES[key], key)));
+  assert.strictEqual(MAP.branches.length, 8);
+});
 console.log(`${n} tests passed`);

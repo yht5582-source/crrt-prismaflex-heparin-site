@@ -225,10 +225,12 @@ function summaryText(result) {
       : "";
     lines.push(`肝素 Bolus ${format(result.heparinBolus, 0)} U、維持 ${format(result.heparinInfusion, 0)} U/hr = ${dec1(result.heparinPerKgHr)} U/kg/hr${ml}`);
   }
+  if (window.crrtDemo) lines.unshift(`【示範病例，虛構，非實際病人】${window.crrtDemo.label}`);
   return lines.join("\n");
 }
 
 function saveInputs() {
+  if (window.crrtDemo) return; // Fictional demo-case values must not replace the saved inputs.
   try {
     const values = Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, field.value]));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));

@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CRRT計算器</title>
-    <link rel="stylesheet" href="./styles.css?v=2.0" />
+    <link rel="stylesheet" href="./styles.css?v=2.1" />
+    <link rel="stylesheet" href="./teach.css?v=2.1" />
   </head>
   <body>
     <main class="app-shell">
@@ -23,6 +24,19 @@
 
         <div class="notice" role="note">
           本工具依「PrismaflexCRRT自動方案表單Heparin版.xlsx」公式製作，供透析護理人員核對機器設定。實際處方、溶液種類、抗凝調整與監測仍需依醫師醫囑與院內流程執行。
+        </div>
+
+        <nav class="tabs" aria-label="頁面分頁">
+          <a href="#tool" data-view="tool">計算工具</a>
+          <a href="#cases" data-view="cases">示範病例</a>
+          <a href="#quiz" data-view="quiz">考題</a>
+          <a href="#map" data-view="map">心智圖</a>
+        </nav>
+
+        <div id="view-tool">
+        <div class="demo-banner" id="demoBanner" role="status" hidden>
+          <span id="demoBannerText"></span>
+          <button type="button" id="demoRestore">還原帶入前數值</button>
         </div>
 
         <div class="layout">
@@ -349,10 +363,35 @@
             <p><b>肝素 mL/hr</b> = 維持滴注 / 針筒濃度；<b>Bolus mL</b> = Bolus / 濃度</p>
           </div>
         </section>
+        </div>
+
+        <div id="view-cases" hidden>
+          <p class="view-intro">6 例皆為虛構教學病例。表格由本頁公式即時計算；「帶入工具」只暫時顯示，不會覆蓋您存的數值。</p>
+          <div class="case-list" id="caseList"></div>
+        </div>
+
+        <div id="view-quiz" hidden>
+          <div class="quiz-bar">
+            <span id="quizScore" role="status" aria-live="polite"></span>
+            <button type="button" id="quizReset">重新作答</button>
+          </div>
+          <div id="quizList"></div>
+        </div>
+
+        <div id="view-map" hidden>
+          <section class="panel mind-map" id="mindMap" aria-label="CRRT 肝素心智圖"></section>
+          <section class="panel teach-sources">
+            <h3>教學內容依據</h3>
+            <ul id="teachSources"></ul>
+            <p>Prismaflex 操作手冊未取得，教學內容不引用機型規格與警報數值，請以原廠手冊與院內流程為準。</p>
+          </section>
+        </div>
       </section>
     </main>
 
-    <script src="./crrt-core.js?v=2.0"></script>
-    <script src="./app.js?v=2.0"></script>
+    <script src="./crrt-core.js?v=2.1"></script>
+    <script src="./app.js?v=2.1"></script>
+    <script src="./teach-content.js?v=2.1"></script>
+    <script src="./teach.js?v=2.1"></script>
   </body>
 </html>
