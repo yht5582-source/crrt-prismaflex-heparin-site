@@ -86,3 +86,7 @@ python3 -m http.server 8826
 - RENAL Replacement Therapy Study Investigators. N Engl J Med 2009;361:1627–1638.
 - Cuker A, et al. ASH 2018 guidelines: heparin-induced thrombocytopenia. Blood Adv 2018;2:3360–3392.
 - Capuano I, et al. Heparin-induced thrombocytopenia: a challenging diagnosis in haemodialysis. Clin Kidney J 2026;19:sfag062.
+
+## 授權
+
+[MIT License](LICENSE)。授權範圍為本 repo 的程式碼與內容，不含上列文獻本身。
